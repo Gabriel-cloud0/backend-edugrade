@@ -1,20 +1,28 @@
 // index.js — Servidor principal de EduGrades
 require("dotenv").config();
-const db = require('./config/db');
-const bcrypt = require('bcryptjs');
 
+const express = require("express");
+const cors    = require("cors");
+const db      = require('./config/db');
+const bcrypt  = require('bcryptjs');
+
+// ── Inicializar base de datos automáticamente ────────────────────────────────
 async function initDB() {
   try {
-    // Crear tabla si no existe
     await db.execute(`CREATE TABLE IF NOT EXISTS usuarios (
       id_usuario INT AUTO_INCREMENT PRIMARY KEY,
-      nombre VARCHAR(100), correo VARCHAR(100) UNIQUE,
-      contrasena VARCHAR(255), rol VARCHAR(50)
+      nombre VARCHAR(100),
+      correo VARCHAR(100) UNIQUE,
+      contrasena VARCHAR(255),
+      rol VARCHAR(50)
     )`);
+
     await db.execute(`CREATE TABLE IF NOT EXISTS historial_modificaciones (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      id_usuario INT, id_calificacion INT,
-      valor_anterior FLOAT, valor_nuevo FLOAT,
+      id_usuario INT,
+      id_calificacion INT,
+      valor_anterior FLOAT,
+      valor_nuevo FLOAT,
       fecha DATETIME DEFAULT NOW()
     )`);
 
@@ -30,32 +38,16 @@ async function initDB() {
       await db.execute('INSERT INTO usuarios (nombre,correo,contrasena,rol) VALUES (?,?,?,?)', ['Prof. Rodríguez','matematicas@escuela.edu',hDoc,'docente']);
       await db.execute('INSERT INTO usuarios (nombre,correo,contrasena,rol) VALUES (?,?,?,?)', ['Prof. Castro','ciencias@escuela.edu',hDoc,'docente']);
       await db.execute('INSERT INTO usuarios (nombre,correo,contrasena,rol) VALUES (?,?,?,?)', ['Prof. Herrera','artes@escuela.edu',hDoc,'docente']);
-      console.log('✅ Usuarios creados');
+      console.log('✅ Usuarios creados correctamente');
     }
     console.log('✅ Base de datos lista');
-  } catch(e){ console.error('DB init error:', e.message); }
+  } catch(e){
+    console.error('DB init error:', e.message);
+  }
 }
 initDB();
-const db = require('./config/db');
 
-async function initDB() {
-  await db.execute(`CREATE TABLE IF NOT EXISTS usuarios (
-    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(100), correo VARCHAR(100) UNIQUE,
-    contrasena VARCHAR(255), rol VARCHAR(50)
-  )`);
-  await db.execute(`CREATE TABLE IF NOT EXISTS historial_modificaciones (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    id_usuario INT, id_calificacion INT,
-    valor_anterior FLOAT, valor_nuevo FLOAT,
-    fecha DATETIME DEFAULT NOW()
-  )`);
-  console.log('✅ Tablas verificadas');
-}
-initDB().catch(console.error);
-const express = require("express");
-const cors    = require("cors");
-
+// ── App Express ──────────────────────────────────────────────────────────────
 const app = express();
 
 // ── Middlewares globales ─────────────────────────────────────────────────────
@@ -63,15 +55,15 @@ app.use(cors({
   origin: '*',
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization']
-}));            // permite peticiones desde el frontend HTML
-app.use(express.json());       // parsear JSON en el body
+}));
+app.use(express.json());
 
 // ── Rutas ────────────────────────────────────────────────────────────────────
-app.use("/auth",            require("./routes/auth"));
-app.use("/cursos",          require("./routes/cursos"));
-app.use("/estudiantes",     require("./routes/estudiantes"));
-app.use("/calificaciones",  require("./routes/calificaciones"));
-app.use("/historial",       require("./routes/historial"));
+app.use("/auth",           require("./routes/auth"));
+app.use("/cursos",         require("./routes/cursos"));
+app.use("/estudiantes",    require("./routes/estudiantes"));
+app.use("/calificaciones", require("./routes/calificaciones"));
+app.use("/historial",      require("./routes/historial"));
 
 // ── Ruta raíz — verificar que el servidor funciona ───────────────────────────
 app.get("/", (req, res) => {
