@@ -1,27 +1,22 @@
-// config/db.js
-// Conexión a MySQL usando las credenciales del archivo .env
+const mysql = require('mysql2/promise');
+const fs    = require('fs');
+const path  = require('path');
 
-const mysql = require("mysql2");
-require("dotenv").config();
-
-const connection = mysql.createPool({
-  host:     process.env.DB_HOST,
-  user:     process.env.DB_USER,
+const pool = mysql.createPool({
+  host    : process.env.DB_HOST,
+  user    : process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  port:     process.env.DB_PORT || 3306,
+  port    : process.env.DB_PORT,
+  ssl     : {
+    ca: fs.readFileSync(path.join(__dirname, '../ca.pem'))
+  },
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit   : 10,
 });
 
-// Verificar conexión al arrancar
-connection.getConnection((err, conn) => {
-  if (err) {
-    console.error("❌ Error conectando a la base de datos:", err.message);
-  } else {
-    console.log("✅ Conectado a MySQL (Railway)");
-    conn.release();
-  }
-});
+pool.getConnection()
+  .then(() => console.log('✅ Conectado a MySQL (Aiven)'))
+  .catch(err => console.error('❌ Error conectando a la base de datos:', err.message));
 
-module.exports = connection.promise();
+module.exports = pool;
