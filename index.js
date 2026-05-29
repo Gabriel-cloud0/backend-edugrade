@@ -26,6 +26,18 @@ async function initDB() {
       fecha DATETIME DEFAULT NOW()
     )`);
 
+    await db.execute(`CREATE TABLE IF NOT EXISTS materias (
+      id_materia INT AUTO_INCREMENT PRIMARY KEY,
+      nombre VARCHAR(100)
+    )`);
+
+    await db.execute(`CREATE TABLE IF NOT EXISTS docente_materias (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      id_usuario INT,
+      id_materia INT,
+      materia VARCHAR(100)
+    )`);
+
     // Insertar usuarios solo si la tabla está vacía
     const [rows] = await db.execute('SELECT COUNT(*) as total FROM usuarios');
     if(rows[0].total === 0){
@@ -40,6 +52,7 @@ async function initDB() {
       await db.execute('INSERT INTO usuarios (nombre,correo,contrasena,rol) VALUES (?,?,?,?)', ['Prof. Herrera','artes@escuela.edu',hDoc,'docente']);
       console.log('✅ Usuarios creados correctamente');
     }
+
     console.log('✅ Base de datos lista');
   } catch(e){
     console.error('DB init error:', e.message);
